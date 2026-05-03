@@ -57,19 +57,17 @@ if not df.empty:
     dynamic_height = max(400, (len(df_bureau) + 2) * 35 + 40)
     
     # فصل الأعمدة المخفية لتجنب مشاكل Streamlit مع تلوين الخلايا المخفية
-    hidden_cols = ["ORDRE", "OLDCODE", "CODE COMPTBLE", "CATEGORIE"]
+    hidden_cols = ["ORDRE", "OLDCODE", "CODE COMPTBLE", "CATEGORIE", "N° BUREAU", "DEP", "OCC"]
     cols_to_drop = [c for c in hidden_cols if c in df_bureau.columns]
     
     hidden_data = df_bureau[cols_to_drop]
     display_df = df_bureau.drop(columns=cols_to_drop)
     
     def highlight_faux(row):
-        styles = [''] * len(row)
-        if 'COMPARAISON' in row and str(row['COMPARAISON']).strip().lower() == 'faux':
-            for i, col in enumerate(row.index):
-                if 'DESIGNATION' in str(col).upper():
-                    styles[i] = 'background-color: rgba(255, 0, 0, 0.3)'
-        return styles
+        comp_col = next((c for c in row.index if str(c).lower() == 'comparaison'), None)
+        if comp_col and str(row[comp_col]).strip().lower() == 'faux':
+            return ['background-color: #ffcccc; color: #900000;'] * len(row)
+        return [''] * len(row)
 
     styled_df = display_df.style.apply(highlight_faux, axis=1)
 
