@@ -8,12 +8,43 @@ st.set_page_config(page_title="إدارة جرد المكاتب", layout="wide")
 # استغلال أقصى مساحة ممكنة للشاشة وتقليل الفراغات الجانبية
 st.markdown("""
     <style>
+        /* Optimisation générale de l'espace */
         .block-container {
             padding-top: 1rem;
-            padding-bottom: 0rem;
+            padding-bottom: 1rem;
             padding-left: 1rem;
             padding-right: 1rem;
             max-width: 100%;
+        }
+        
+        /* Cacher le menu et le footer Streamlit pour gagner de la place */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        
+        /* Optimisations SPECIFIQUES aux smartphones (écrans de moins de 768px) */
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: 0.5rem;  /* Marges très réduites en haut */
+                padding-left: 0.2rem; /* Marges réduites sur les côtés pour laisser la place au tableau */
+                padding-right: 0.2rem;
+            }
+            
+            /* Rendre le titre un peu plus petit sur mobile */
+            h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            /* Forcer les boutons à prendre toute la largeur pour faciliter le toucher */
+            .stButton > button {
+                width: 100% !important;
+                height: 50px !important; /* Boutons plus grands (Touch Target) */
+            }
+
+            /* Ajuster la taille de police du tableau pour mobile */
+            div[data-testid="stDataFrame"] {
+                font-size: 0.85rem !important;
+            }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -54,7 +85,8 @@ if not df.empty:
     # 5. عرض البيانات في جدول قابل للتعديل (Data Editor)
     # num_rows="dynamic" تسمح للمستخدم بإضافة أو حذف صفوف
     # حساب ارتفاع الجدول ديناميكياً لإظهار كافة الأسطر دون الحاجة للتمرير العمودي
-    dynamic_height = max(400, (len(df_bureau) + 2) * 35 + 40)
+    calculated_height = (len(df_bureau) + 2) * 35 + 40
+    dynamic_height = max(400, min(calculated_height, 550))
     
     # فصل الأعمدة المخفية لتجنب مشاكل Streamlit مع تلوين الخلايا المخفية
     hidden_cols = ["ORDRE", "OLDCODE", "CODE COMPTBLE", "CATEGORIE", "N° BUREAU", "DEP", "OCC"]
