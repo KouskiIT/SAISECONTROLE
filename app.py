@@ -4,6 +4,20 @@ import os
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="إدارة جرد المكاتب", layout="wide")
+
+# استغلال أقصى مساحة ممكنة للشاشة وتقليل الفراغات الجانبية
+st.markdown("""
+    <style>
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 0rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            max-width: 100%;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("📦 إدارة المعدات حسب رقم المكتب")
 
 # اسم ملف الإكسيل الخاص بك
@@ -39,18 +53,36 @@ if not df.empty:
 
     # 5. عرض البيانات في جدول قابل للتعديل (Data Editor)
     # num_rows="dynamic" تسمح للمستخدم بإضافة أو حذف صفوف
-    edited_df = st.data_editor(
-        df_bureau, 
+    # حساب ارتفاع الجدول ديناميكياً لإظهار كافة الأسطر دون الحاجة للتمرير العمودي
+    dynamic_height = max(400, (len(df_bureau) + 2) * 35 + 40)
+    
+    # فصل الأعمدة المخفية لتجنب مشاكل Streamlit مع تلوين الخلايا المخفية
+    hidden_cols = ["ORDRE", "OLDCODE", "CODE COMPTBLE", "CATEGORIE"]
+    cols_to_drop = [c for c in hidden_cols if c in df_bureau.columns]
+    
+    hidden_data = df_bureau[cols_to_drop]
+    display_df = df_bureau.drop(columns=cols_to_drop)
+    
+    def highlight_faux(row):
+        styles = [''] * len(row)
+        if 'COMPARAISON' in row and str(row['COMPARAISON']).strip().lower() == 'faux':
+            for i, col in enumerate(row.index):
+                if 'DESIGNATION' in str(col).upper():
+                    styles[i] = 'background-color: rgba(255, 0, 0, 0.3)'
+        return styles
+
+    styled_df = display_df.style.apply(highlight_faux, axis=1)
+
+    edited_display_df = st.data_editor(
+        styled_df, 
         num_rows="dynamic", 
         width="stretch",
-        hide_index=True,
-        column_config={
-            "ORDRE": None,
-            "OLDCODE": None,
-            "CODE COMPTBLE": None,
-            "CATEGORIE": None
-        }
+        height=dynamic_height,
+        hide_index=True
     )
+    
+    # دمج الأعمدة المخفية مجدداً بعد التعديل للحفاظ عليها عند الحفظ
+    edited_df = edited_display_df.join(hidden_data)
     
     # عرض إجمالي عدد المعدات (Total Articles)
     st.markdown(f"**Total articles : {len(edited_df)}**")
